@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="http://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css" />
+    <script type="text/javascript" src="http://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+    <style>
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+    </div>
+    <script type="text/javascript">
+        var app = new Vue({
+            el: '#app',
+            data: {
+                apikey: '-rMnKsK0RMW35qzOS7G63Q',
+                apisecret: 'Rp52K4ycDmf5CIDru6ANWB851UtvhC0r1u9r',
+                token: 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOm51bGwsImlzcyI6Ii1yTW5Lc0swUk1XMzVxek9TN0c2M1EiLCJleHAiOjE5NDIyOTA5MDAsImlhdCI6MTYyNjc1MzA0NH0.oVAn_KyekbfYObnjj36_wg8ctaZYkVIxXr0R3YOLfgE',
+                connections: [],
+                dirs: [],
+                selectdir: '',
+                //autorefresh: null,
+                filecontent: '',
+                connectionid: '',
+                newdirname: '',
+                dataTable: null,
+                sconnection: null,
+                imgPath: '',
+            },
+            watch: {
+                'connections': function () {
+                    this.$nextTick(() => {
+                        $('table').dataTable();
+                    })
+                },
+            },
+            methods: {
+                getLastDir(dir) {
+                    var lastindex = 0;
+                    for (i = 0; i < dir.length; i++) {
+                        if (dir[i] == "/" || dir[i] == "\\")
+                            lastindex = i;
+                    }
+                    return dir.substring(lastindex == 0 ? 0 : lastindex + 1);
+                },
+                syncConnections() {
+                    //clearTimeout(this.autorefresh);
+                    //this.autorefresh = null;
+                    axios.get('/api/connections/?url=' + encodeURI(this.selectdir)).then(response => {
+                        this.connections = response.data.connections;
+                        this.connections.sort((a, b) => (a.connectedtime > b.connectedtime) ? -1 : 1)
+                        this.dirs = response.data.directories;
+                        this.selectdir = response.data.currentdir;
+                        //this.autorefresh = setTimeout(this.syncConnections, 10000);
+                    });
+                },
+                viewFile(conID) {
+                    axios.get('/api/connections/?connectionId=' + conID + '&url=' + encodeURI(this.selectdir)).then(response => {
+                        console.log(response, response.data);
+                        this.connectionid = conID;
+                        this.filecontent = response.data;
+                        //this.filecontent = this.filecontent.replace(/\n/g, "<br />");
+                        $('#contentmodal').modal();
+                    });
+                },
+                screenShot(conID) {
+                    this.sconnection.invoke('ScreenShot', conID);
+                },
+                renameDirectory() {
+                    if (!this.newdirname) {
+                        alert('Phải điền ca thi mới!');
+                        return;
+                    }
+                    if(confirm('Việc đổi tên ca thi có thể gây lỗi nếu ca thi đang diễn ra. Chỉ thực hiện sau khi kết thúc ca thi. Bạn có muốn tiếp tục?'))
+                    axios.get('/api/connections/MoveDir?newname=' + this.newdirname + '&url=' + encodeURI(this.selectdir)).then(response => {
+                        this.connections = response.data.connections;
+                        this.connections.sort((a, b) => (a.connectedtime > b.connectedtime) ? -1 : 1)
+                        this.dirs = response.data.directories;
+                        this.selectdir = response.data.currentdir;
+                        //this.autorefresh = setTimeout(this.syncConnections, 10000);
+                    }).catch(function (error) {
+                        // handle error
+                        console.log(error);
+                        alert('Chưa đổi được tên thư mục. Vui lòng thử lại sau một lúc! Thường cần kết thúc toàn bộ kết nối của ca thi trước khi đổi tên thư mục.')
+                    });
+                }
+            },
+            mounted() {
+                axios.get('https://api.zoom.us/v2/users/me',{},{headers:{Authorization: 'Bearer '+this.token}}).then(response => {
+                    console.log(response);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
