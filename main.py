@@ -47,7 +47,7 @@ async def proot(request: Request):
         monitoruserlist = monitoruserlist['userlist']
         if (joineduser in monitoruserlist) | (joinedusername in monitoruserlist): 
             joineduser = joinedusername + ' '+joineduser
-            print("Found user "+joineduser)
+            #print("Found user "+joineduser)
             await sendNotification("Found user "+joineduser) #One signal
             resp = requests.post('https://api.pushover.net/1/messages.json', data = {'token':appapi,'user':userapi,'message':"Zoom found user "+status+ ' ' +joineduser}) #Push Over
             #print(x.content)
