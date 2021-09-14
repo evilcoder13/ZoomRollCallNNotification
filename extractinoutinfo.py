@@ -33,7 +33,8 @@ for line in open('logs.json'):
         data = ast.literal_eval(line)
         data = ast.literal_eval(data['log'])
         topic = data['payload']['object']['topic']
-        username = data['payload']['object']['participant']['user_name']
+        try: username = data['payload']['object']['participant']['user_name']
+        except: continue;
         try: 
             join_time = data['payload']['object']['participant']['join_time']
             join_time = datetime.strftime(datetime.strptime(join_time,'%Y-%m-%dT%H:%M:%SZ')+timedelta(hours=7),'%Y-%m-%d %H:%M:%S')

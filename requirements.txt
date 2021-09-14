@@ -2,4 +2,5 @@
 zoomus
 fastapi[all]
 uvicorn
+pandas
 #gunicorn==20.0.4
