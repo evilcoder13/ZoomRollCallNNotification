@@ -19,11 +19,14 @@ userapi = 'uyrtbe36bs47c3sma4grm7jxfjjidv'
 @app.get("/zoom")
 async def root():
     return {"message": "Hello World"}
-
+async def writefile(line):
+    with open('logs.json','a') as logfile:
+        logfile.write(line+"\n");
 @app.post("/zoom")
 async def proot(request: Request):
     data = await request.json()
     print(data)
+    writefile(data)
     try:
         status = data['event']
         if status=='recording.completed':
@@ -36,6 +39,7 @@ async def proot(request: Request):
                 #resp = requests.post('https://api.pushover.net/1/messages.json', data = {'token':appapi,'user':userapi,'message':"Topic: "+topic+ ', Type: '+rec_type+', Download: ' +download_url,'url_title':rec_type,'url':download_url}) #Push Over
                 #resp = requests.post('https://api.pushover.net/1/messages.json', data = {'token':appapi,'user':userapi,'message':"Topic: "+topic+ ', Type: '+rec_type+', Download: ' +download_url}) #Push Over
                 print('{} - {}: {}'.format(topic,rec_type,download_url))
+                writefile('{} - {}: {}'.format(topic,rec_type,download_url))
             return { 'message': 'OK' }
         joineduser = data['payload']['object']['participant']['email']
         joinedusername = data['payload']['object']['participant']['user_name']
@@ -102,7 +106,7 @@ async def listrecordings():
     for api in apis:
         client = ZoomClient(api['key'], api['secret'])
         user_list = json.loads(client.user.list().content)
-        print(user_list)
+        #print(user_list)
         for user in user_list['users']:
             user_id = user['id']
             recording_list = json.loads(client.recording.list(user_id=user_id).content)
@@ -124,4 +128,4 @@ async def sendNotification(msg):
     
     req = requests.post("https://onesignal.com/api/v1/notifications", headers=header, data=json.dumps(payload))
     
-    print(req.status_code, req.reason)
+    #print(req.status_code, req.reason)
